@@ -24,7 +24,7 @@ public class ExcelReader {
      * @return
      * @throws IOException
      */
-    public XlsData loadXls(File f) throws IOException {
+    public XlsData loadXls(File f) throws Exception {
 
         InputStream is = new FileInputStream(f);
         org.apache.poi.ss.usermodel.Workbook wbs;
@@ -69,10 +69,10 @@ public class ExcelReader {
             marketData.setTradePoint(flag);
             marketData.setTradeType(preDk==0?TradeType.SHORT:TradeType.LONG);
 
-            marketData.setOpenPrice(checkNull(curRow.getCell(1).getNumericCellValue()));
-            marketData.setHightestPrice(checkNull(curRow.getCell(2).getNumericCellValue()));
-            marketData.setLowestPrice(checkNull(curRow.getCell(3).getNumericCellValue()));
-            marketData.setClosePrice(checkNull(curRow.getCell(4).getNumericCellValue()));
+            marketData.setOpenPrice(checkNull(curRow.getCell(1).getNumericCellValue(),"第" + (i+1) + "行，开盘价"));
+            marketData.setHightestPrice(checkNull(curRow.getCell(2).getNumericCellValue(),"第" + (i+1) + "行，最高价"));
+            marketData.setLowestPrice(checkNull(curRow.getCell(3).getNumericCellValue(),"第" + (i+1) + "行，最低价"));
+            marketData.setClosePrice(checkNull(curRow.getCell(4).getNumericCellValue(),"第" + (i+1) + "行，收盘价"));
 
 
 
@@ -138,9 +138,9 @@ public class ExcelReader {
     }
 
 
-    private Double checkNull(Double value){
+    private Double checkNull(Double value,String description) throws Exception{
         if(value==null){
-            return 0.0;
+            throw new Exception("妈蛋有个单元格没有填数据这样好吗？位置：" + description);
         }
         return value;
     }
@@ -284,7 +284,7 @@ public class ExcelReader {
             File newFile =excelReader.pasteFile(f);
             excelReader.modify(newFile,tradeList);
             System.out.println("========执行结束，文件地址" + newFile.getPath());
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

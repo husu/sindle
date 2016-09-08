@@ -100,27 +100,27 @@ public class MainUI implements ActionListener {
             }else {
                new Thread(() -> {     //我觉得这么做不科学，但是。。。你想怎样
                    ExcelReader excelReader = new ExcelReader();
-                   log.append("正在载入Excel表" + newline);
+                   log.append("正在载入Excel表，么么哒" + newline);
 
                    try {
                        XlsData xlsData =  excelReader.loadXls(fc.getSelectedFile());
 
-                       log.append("载入成功" + newline);
-                       log.append("分析计算中" + newline);
+                       log.append("载入成功，么么哒" + newline);
+                       log.append("分析计算中，么么哒" + newline);
 
                        List<MarketData> tradeList = excelReader.analyseData(xlsData.getMdList(),xlsData.getStopLossLine());
 
-                       log.append("分析计算完毕" + newline);
-                       log.append("复制文件" + newline);
+                       log.append("分析计算完毕，么么哒" + newline);
+                       log.append("复制文件，么么哒" + newline);
 
                        File newFile = excelReader.pasteFile(fc.getSelectedFile());
 
-                       log.append("文件写入中" + newline);
+                       log.append("文件写入中，么么哒" + newline);
                        excelReader.modify(newFile,tradeList);
 
                        log.append("文件写入完毕，文件路径为 ：" + newFile.getPath() + newline);
 
-                   } catch (IOException e1) {
+                   } catch (Exception e1) {
                        log.append("错误：" + e1.getMessage());
                        e1.printStackTrace();
                    }
