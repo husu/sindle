@@ -21,7 +21,6 @@ public class MainUI implements ActionListener {
 
     private JPanel panel1;
     private JTextArea log;
-    private JTextField excelNum;
     private JButton chooseFileButton;
     private JButton splitExcelButton;
     private JPanel panel2;
@@ -30,7 +29,7 @@ public class MainUI implements ActionListener {
 
     static private final String newline = "\n";
     JFileChooser fc;
-    String outString, inputFile3,outputPath, divisionInputPath, divistionInputFileName;
+    String outString, inputFile3;
 
     public static void main(String[] args) {
 
@@ -48,7 +47,7 @@ public class MainUI implements ActionListener {
     }
 
     private static void createAndShowGUI() throws URISyntaxException{
-        JFrame frame = new JFrame("Sindle DBD");
+        JFrame frame = new JFrame("Sindle DBD 1.01");
         frame.setContentPane(new MainUI().panel1);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
