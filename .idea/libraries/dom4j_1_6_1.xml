@@ -5,6 +5,8 @@
       <root url="jar://$PROJECT_DIR$/lib/poi-3.8.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/poi-ooxml-3.8.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/poi-ooxml-schemas-3.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/stax-api-1.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/xmlbeans-2.3.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

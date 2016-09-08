@@ -47,7 +47,7 @@ public class MainUI implements ActionListener {
     }
 
     private static void createAndShowGUI() throws URISyntaxException{
-        JFrame frame = new JFrame("Sindle DBD 1.01");
+        JFrame frame = new JFrame("Sindle DBD 1.02");
         frame.setContentPane(new MainUI().panel1);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
@@ -98,8 +98,10 @@ public class MainUI implements ActionListener {
                 log.append("请选择要计算的Excel表" + newline);
             }else {
                new Thread(() -> {     //我觉得这么做不科学，但是。。。你想怎样
-                   ExcelReader excelReader = new ExcelReader();
                    log.append("正在载入Excel表，么么哒" + newline);
+
+
+                   ExcelReader excelReader = new ExcelReader();
 
                    try {
                        XlsData xlsData =  excelReader.loadXls(fc.getSelectedFile());

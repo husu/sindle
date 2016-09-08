@@ -211,7 +211,7 @@ public class ExcelReader {
      * @param targetXlsFile
      * @param tradeList
      */
-    public void modify(File targetXlsFile,List<MarketData> tradeList) throws IOException {
+    public void modify(File targetXlsFile,List<MarketData> tradeList) throws Exception {
 
         InputStream is = new FileInputStream(targetXlsFile);
 
@@ -282,7 +282,7 @@ public class ExcelReader {
         return cell;
     }
 
-    private Workbook getWorkbookInstance(String fileName,InputStream is) throws IOException {
+    private Workbook getWorkbookInstance(String fileName,InputStream is) throws Exception {
         if(fileName.matches(".+\\.(xls|XLS)$")) return new HSSFWorkbook(is);
         else if(fileName.matches(".+\\.(xlsx|XLSX)$")){
             return new XSSFWorkbook(is);
