@@ -3,11 +3,10 @@ package com.parsec.sindle;
 import com.parsec.sindle.model.MarketData;
 import com.parsec.sindle.model.TradeType;
 import com.parsec.sindle.model.XlsData;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.*;
 import java.util.*;
@@ -221,6 +220,12 @@ public class ExcelReader {
         Workbook wbs = this.getWorkbookInstance(fileName,is);
 
         Sheet childSheet = wbs.getSheetAt(0);
+        Sheet newSheet = wbs.createSheet("汇总");
+        Row r1= newSheet.createRow(0);
+        for(Integer x = 0;x<21;x++){
+            getEditingCell(r1,x).setCellValue(childSheet.getRow(4).getCell(x).getStringCellValue());
+        }
+
 
         tradeList.forEach(p->{          //填充交易点
             Map<String,Double> curMap = p.getResultMap();
@@ -254,7 +259,34 @@ public class ExcelReader {
 
             }
 
+            Double curValue=0.0;
+            Cell curCell=null;
+            Row r= newSheet.createRow(newSheet.getLastRowNum()+1);
+            for(Integer x = 0;x<21;x++){
+                if(x==0) {
+                    getEditingCell(r, x).setCellValue(
+                            childSheet.getRow(p.getRowIndex()).getCell(x).getStringCellValue());
+                }else{
+                    curValue =  childSheet.getRow(p.getRowIndex()).getCell(x).getNumericCellValue();
+                    curCell =getEditingCell(r, x);
+
+                    if(curValue<0.0){
+                        CellStyle style =  wbs.createCellStyle();
+                        style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+                        style.setFillForegroundColor(HSSFColor.RED.index);
+
+                        curCell.setCellStyle(style);
+                    }
+
+                    curCell.setCellValue(curValue);
+
+
+                }
+            }
+
         });
+
+
 
         FileOutputStream out = null;
         try {
