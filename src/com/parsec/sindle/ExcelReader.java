@@ -4,6 +4,7 @@ import com.parsec.sindle.model.MarketData;
 import com.parsec.sindle.model.TradeType;
 import com.parsec.sindle.model.XlsData;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -223,15 +224,18 @@ public class ExcelReader {
 
         tradeList.forEach(p->{          //填充交易点
             Map<String,Double> curMap = p.getResultMap();
-            int i= 10;
-            childSheet.getRow(p.getRowIndex()).getCell(i++).setCellValue(curMap.get("openPoint"));
-            childSheet.getRow(p.getRowIndex()).getCell(i++).setCellValue(curMap.get("sellPoint"));
-            childSheet.getRow(p.getRowIndex()).getCell(i++).setCellValue(curMap.get("lossNoStop"));
-            childSheet.getRow(p.getRowIndex()).getCell(i++).setCellValue(curMap.get("lossStop"));//结果有止损
-            childSheet.getRow(p.getRowIndex()).getCell(i++).setCellValue(curMap.get("highestPrice")); //最高价
-            childSheet.getRow(p.getRowIndex()).getCell(i++).setCellValue(curMap.get("lowestPrice"));
-            childSheet.getRow(p.getRowIndex()).getCell(i++).setCellValue(curMap.get("mostEarn"));
-            childSheet.getRow(p.getRowIndex()).getCell(i++).setCellValue(curMap.get("mostLoss"));
+
+            Integer i= 10;
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("openPoint"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("sellPoint"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("lossNoStop"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("lossStop"));//结果有止损
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("highestPrice")); //最高价
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("lowestPrice"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("mostEarn"));
+
+
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("mostLoss"));
             int dk = 1; //这个参数就是这么屌
             if(p.getTradeType()==TradeType.SHORT){
                 dk = -1;
@@ -244,9 +248,9 @@ public class ExcelReader {
                 curHOL = (p.getTradeType()==TradeType.LONG) ? childSheet.getRow(n).getCell(2).getNumericCellValue():childSheet.getRow(n).getCell(3).getNumericCellValue();    //多取最高价计算  空取最低价计算  用来计算最多赚
                 curHOL4zsz = (p.getTradeType()==TradeType.SHORT) ? childSheet.getRow(n).getCell(2).getNumericCellValue():childSheet.getRow(n).getCell(3).getNumericCellValue();    //多取最高价计算  空取最低价计算  用来计算最多赚
                 closePrice = childSheet.getRow(n).getCell(4).getNumericCellValue();
-                childSheet.getRow(n).getCell(18).setCellValue((curHOL-p.getResultMap().get("openPoint"))*dk);  //最多赚，屌不屌
-                childSheet.getRow(n).getCell(19).setCellValue((curHOL4zsz-p.getResultMap().get("openPoint"))*dk);  //最少赚，屌不屌
-                childSheet.getRow(n).getCell(20).setCellValue((closePrice-p.getResultMap().get("openPoint"))*dk);  //最少赚，屌不屌
+                getEditingCell(childSheet.getRow(n),18).setCellValue((curHOL-p.getResultMap().get("openPoint"))*dk);  //最多赚，屌不屌
+                getEditingCell(childSheet.getRow(n),19).setCellValue((curHOL4zsz-p.getResultMap().get("openPoint"))*dk);  //最少赚，屌不屌
+                getEditingCell(childSheet.getRow(n),20).setCellValue((closePrice-p.getResultMap().get("openPoint"))*dk);  //最少赚，屌不屌
 
             }
 
@@ -270,6 +274,13 @@ public class ExcelReader {
 
     }
 
+    private Cell getEditingCell(Row row,Integer i){
+        Cell cell = row.getCell(i);
+        if(cell==null){
+            cell = row.createCell(i);
+        }
+        return cell;
+    }
 
     private Workbook getWorkbookInstance(String fileName,InputStream is) throws IOException {
         if(fileName.matches(".+\\.(xls|XLS)$")) return new HSSFWorkbook(is);
