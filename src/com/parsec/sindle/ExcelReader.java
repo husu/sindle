@@ -36,7 +36,7 @@ public class ExcelReader {
         org.apache.poi.ss.usermodel.Sheet childSheet = wbs.getSheetAt(0);
 
 
-        Double mostLossLine = java.lang.Math.abs(childSheet.getRow(2).getCell(1).getNumericCellValue())*(-1);
+        Double mostLossLine = checkNull(java.lang.Math.abs(childSheet.getRow(2).getCell(1).getNumericCellValue())*(-1),"止损设置，B3单元格");
 
         MarketData marketData;
         Double preDk = null;
