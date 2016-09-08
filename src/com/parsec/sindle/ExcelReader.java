@@ -142,6 +142,11 @@ public class ExcelReader {
         if(value==null){
             throw new Exception("妈蛋有个单元格没有填数据这样好吗？位置：" + description);
         }
+
+        if(value==0.0){
+            throw new Exception("这个单元格没有填数据或者数据为零，这不科学！位置：" + description);
+        }
+
         return value;
     }
 
