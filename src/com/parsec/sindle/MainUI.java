@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * @auther:husu
- * @version:1.04
+ * @version:1.10
  * @date 15/6/6.
  */
 public class MainUI implements ActionListener {
@@ -53,12 +53,11 @@ public class MainUI implements ActionListener {
     }
 
     private static void createAndShowGUI() throws URISyntaxException{
-        JFrame frame = new JFrame("Sindle DBD 1.04");
+        JFrame frame = new JFrame("Sindle DBD 1.10");
         frame.setContentPane(new MainUI().panel1);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
-
 
 
     }
@@ -84,7 +83,7 @@ public class MainUI implements ActionListener {
                 } catch (URISyntaxException e1) {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
-                    log.append(e1.toString());
+                    log.append(e1.toString()+"\n");
                 }
                 fc.setCurrentDirectory(startFile);
             }
@@ -95,6 +94,8 @@ public class MainUI implements ActionListener {
                 inputFile3 = file.getPath();
                 outString = fc.getSelectedFile().getPath();
                 log.append("Opening origin file: " + file.getPath() + "\n");
+
+
             } else {
                 log.append("Open command cancelled by user." + "\n");
             }
