@@ -4,9 +4,11 @@ import com.parsec.sindle.model.MarketData;
 import com.parsec.sindle.model.TradeType;
 import com.parsec.sindle.model.XlsData;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.*;
 import java.util.*;
@@ -85,9 +87,6 @@ public class ExcelReader {
                     getEditingCell(r1,7).setCellFormula("(D" + (r + 1) + ">G" + (r + 1) + ")*1");//最低计算
                     getEditingCell(r1,8).setCellFormula("(C" + (r + 1) + ">G" + (r + 1) + ")*1"); //最高计算
                     getEditingCell(r1,9).setCellFormula("IF(H" + r + "=I" + r + ",I" + r + ",J" + r + ")"); //多空计算
-                }else{
-                    getEditingCell(r1,6).setCellValue("");//MA30
-
                 }
             }
 
@@ -122,13 +121,17 @@ public class ExcelReader {
 
         Double mostLossLine = checkNull(java.lang.Math.abs(childSheet.getRow(2).getCell(1).getNumericCellValue())*(-1),"止损设置，B3单元格");
 
+
         MarketData marketData;
         Double preDk = null;
         Row curRow;
 
+        childSheet.setForceFormulaRecalculation(true);
+
 
         List<MarketData> mdList= new ArrayList<>();
 
+        FormulaEvaluator evaluator = this.getFormulaEvalatorInstance(fileName,wbs);
 
         for(int i=childSheet.getLastRowNum();i>=(5+maNum-1);i--){
             curRow = childSheet.getRow(i);
@@ -137,23 +140,20 @@ public class ExcelReader {
 
             boolean flag = false;
 
-            if(preDk==null){
-                preDk = curRow.getCell(9).getNumericCellValue();//获得多空状态
-            }else if(preDk != curRow.getCell(9).getNumericCellValue()){
-                preDk = curRow.getCell(9).getNumericCellValue();
+            if ((preDk!=null && preDk != this.getFormulaValue(curRow.getCell(9),evaluator)) || i== childSheet.getLastRowNum()){
                 flag =true;
             }
 
-            if(i==childSheet.getLastRowNum()){
-                preDk = curRow.getCell(9).getNumericCellValue();
-                flag=true;
-            }
+            preDk = this.getFormulaValue(curRow.getCell(9),evaluator);
+
+
+
 
             marketData = new MarketData(i);
 
 
             marketData.setTradePoint(flag);
-            marketData.setTradeType(preDk==0?TradeType.SHORT:TradeType.LONG);
+            marketData.setTradeType(preDk==0.0?TradeType.SHORT:TradeType.LONG);
 
             marketData.setOpenPrice(checkNull(curRow.getCell(1).getNumericCellValue(),"第" + (i+1) + "行，开盘价"));
             marketData.setHightestPrice(checkNull(curRow.getCell(2).getNumericCellValue(),"第" + (i+1) + "行，最高价"));
@@ -174,11 +174,18 @@ public class ExcelReader {
 
     }
 
+    private double getFormulaValue(Cell cell,FormulaEvaluator evaluator){
+        if(cell.getCellType()== Cell.CELL_TYPE_FORMULA){
+            return evaluator.evaluate(cell).getNumberValue();//获取单元格的值
+        }else{
+            return cell.getNumericCellValue();
+        }
+    }
 
-    public List<MarketData> analyseData(List<MarketData> mdList,Double mostLossLine){
+    public List<MarketData> analyseData(List<MarketData> mdList,Double mostLossLine,int maNum){
         List<MarketData> tradeList = mdList.stream().sorted((p1, p2)->(p1.getRowIndex()>p2.getRowIndex()?1:-1)).filter(MarketData::getTradePoint).collect(Collectors.toList());
 
-        tradeList.stream().reduce(new MarketData(4),(p1,p2)-> {  //这个地方的初始值是4，是因为下面做了加1操作
+        tradeList.stream().reduce(new MarketData(4+maNum-1),(p1,p2)-> {  //这个地方的初始值是4，是因为下面做了加1操作
             p2.setPreTradePoint(p1.getRowIndex()+1);
             return p2;
         });
@@ -189,7 +196,7 @@ public class ExcelReader {
             //开仓点位
             map.put("openPoint",mdList.stream().filter(md-> {
                 int pp = p.getPreTradePoint()-1;
-                pp = pp<5?5:pp;
+                pp = pp<(5+maNum-1)?(5+maNum-1):pp;
                 return md.getRowIndex() == pp;
             }).max(Comparator.comparing(MarketData::getClosePrice)).get().getClosePrice());
 
@@ -398,10 +405,20 @@ public class ExcelReader {
         return cell;
     }
 
+
     private Workbook getWorkbookInstance(String fileName,InputStream is) throws Exception {
         if(fileName.matches(".+\\.(xls|XLS)$")) return new HSSFWorkbook(is);
         else if(fileName.matches(".+\\.(xlsx|XLSX)$")){
             return new XSSFWorkbook(is);
+        }else{
+            throw new IOException("只接受xls与xlsx文件");
+        }
+    }
+
+    private FormulaEvaluator getFormulaEvalatorInstance(String fileName,Workbook wbs) throws Exception {
+        if(fileName.matches(".+\\.(xls|XLS)$")) return new HSSFFormulaEvaluator((HSSFWorkbook) wbs);
+        else if(fileName.matches(".+\\.(xlsx|XLSX)$")){
+            return new XSSFFormulaEvaluator((XSSFWorkbook) wbs);
         }else{
             throw new IOException("只接受xls与xlsx文件");
         }

@@ -139,12 +139,12 @@ public class MainUI implements ActionListener {
 
                            log.append("开始分析计算MA" + i + "数据，么么哒\n");
 
-                           List<MarketData> tradeList = excelReader.analyseData(xlsData.getMdList(),xlsData.getStopLossLine());
+                           List<MarketData> tradeList = excelReader.analyseData(xlsData.getMdList(),xlsData.getStopLossLine(),i);
 
 
                            excelReader.modify(maFile,tradeList,i);
 
-                           log.append("MA" + i + "处理外币，么么哒\n");
+                           log.append("MA" + i + "处理完毕，亚克西\n");
 
 
                        }
