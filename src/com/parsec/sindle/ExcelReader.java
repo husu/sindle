@@ -18,13 +18,85 @@ import java.util.stream.Collectors;
  * @date 16/9/6.
  */
 public class ExcelReader {
+
+    /**
+     * 创建含有MA数据的各个表
+     * @param file
+     * @return
+     */
+    public File createMADataSheet(File file,int from,int to) throws Exception {
+
+        StringBuffer newFileName = new StringBuffer(file.getName().substring(0,file.getName().lastIndexOf(".")))
+                .append("-MADATA-").append(new Date().getTime()).append(file.getName().substring(file.getName().lastIndexOf(".")));
+
+
+        File mafile = this.pasteFile(file,newFileName.toString());
+
+
+        InputStream is = new FileInputStream(mafile);
+        org.apache.poi.ss.usermodel.Workbook wbs;
+
+        wbs = this.getWorkbookInstance(mafile.getName(),is);
+
+        Sheet maSheet;
+
+        Sheet firstSheet = wbs.getSheetAt(0);
+
+
+
+         // 复制多个MA表
+
+        Row r1;
+        for(int i=from;i<=to;i++){
+
+            maSheet = wbs.createSheet("MA" + i);
+
+            StringBuffer formula ;
+            for(int r=4;r<=firstSheet.getLastRowNum();r++){      //遍历行
+
+                r1 = maSheet.getRow(r);
+                if(r1==null){
+                    r1= maSheet.createRow(r);
+                }
+
+                for(int c=0;c<21;c++){ //填充列
+                    if(firstSheet.getRow(r).getCell(c).getCellType()==Cell.CELL_TYPE_STRING) {
+                        getEditingCell(r1, c).setCellValue(firstSheet.getRow(r).getCell(c).getStringCellValue());
+                    }else {
+                        getEditingCell(r1, c).setCellValue(firstSheet.getRow(r).getCell(c).getNumericCellValue());
+                    }
+                }
+
+                if(r-5>i-2){ //跳过前 i-1行
+                    formula = new StringBuffer("average(E").append(r-3).append(":E").append(r+1).append(")");
+                    getEditingCell(r1,6).setCellFormula(formula.toString());//MA30
+                    getEditingCell(r1,7).setCellFormula(new StringBuffer("(D").append(r+1).append(">G").append(r+1).append(")*1").toString());//最低计算
+                    getEditingCell(r1,8).setCellFormula(new StringBuffer("(C").append(r+1).append(">G").append(r+1).append(")*1").toString()); //最高计算
+                }else{
+                    getEditingCell(r1,6).setCellValue("");//MA30
+
+                }
+            }
+            getEditingCell(maSheet.getRow(2),0).setCellValue("止损");
+            getEditingCell(maSheet.getRow(2),1).setCellValue(firstSheet.getRow(2).getCell(1).getNumericCellValue());
+
+        }
+
+
+        //写入文件
+
+        this.writeWbs(mafile,wbs);
+        return mafile;
+    }
+
+
     /**
      * 从文件中读取行情数据<br>
      * @param f
      * @return
      * @throws IOException
      */
-    public XlsData loadXls(File f) throws Exception {
+    public XlsData loadXls(File f,Integer maNum) throws Exception {
 
         InputStream is = new FileInputStream(f);
         org.apache.poi.ss.usermodel.Workbook wbs;
@@ -33,7 +105,7 @@ public class ExcelReader {
 
         wbs = this.getWorkbookInstance(fileName,is);
 
-        org.apache.poi.ss.usermodel.Sheet childSheet = wbs.getSheetAt(0);
+        org.apache.poi.ss.usermodel.Sheet childSheet = wbs.getSheet("MA"+maNum);
 
 
         Double mostLossLine = checkNull(java.lang.Math.abs(childSheet.getRow(2).getCell(1).getNumericCellValue())*(-1),"止损设置，B3单元格");
@@ -48,6 +120,12 @@ public class ExcelReader {
 
         for(int i=childSheet.getLastRowNum();i>=5;i--){
             curRow = childSheet.getRow(i);
+
+
+            if("".equals(curRow.getCell(6).getStringCellValue())){
+                continue;
+            }
+
 
             boolean flag = false;
 
@@ -153,15 +231,20 @@ public class ExcelReader {
 
     /**
      * 复制粘贴文件，没有什么新意的老Java代码
-     * @param sourceFile
+     * @param sourceFile 复制文件来源
+     * @param newFileName 新文件的名字
      * @return
      * @throws IOException
      */
-    public File pasteFile(File sourceFile) throws IOException {
+    public File pasteFile(File sourceFile,String newFileName) throws IOException {
 
         String sourceFileName = sourceFile.getName();
         String targetFilePath = sourceFile.getParentFile().getPath() + File.separator + sourceFileName.substring(0,sourceFileName.lastIndexOf("."))
               + "-" + (new Date()).getTime() + "(done)"  + "." + sourceFileName.substring(sourceFileName.lastIndexOf(".")+1);
+
+        if(!"".equals(newFileName)){
+            targetFilePath =    sourceFile.getParentFile().getPath() + File.separator + newFileName;
+        }
 
 
         File targetFile = new File(targetFilePath);
@@ -210,7 +293,7 @@ public class ExcelReader {
      * @param targetXlsFile
      * @param tradeList
      */
-    public void modify(File targetXlsFile,List<MarketData> tradeList) throws Exception {
+    public void modify(File targetXlsFile,List<MarketData> tradeList,int maNum) throws Exception {
 
         InputStream is = new FileInputStream(targetXlsFile);
 
@@ -219,8 +302,8 @@ public class ExcelReader {
 
         Workbook wbs = this.getWorkbookInstance(fileName,is);
 
-        Sheet childSheet = wbs.getSheetAt(0);
-        Sheet newSheet = wbs.createSheet("汇总");
+        Sheet childSheet = wbs.getSheet("MA" + maNum);
+        Sheet newSheet = wbs.createSheet("MA"+maNum+"汇总");
         Row r1= newSheet.createRow(0);
         for(Integer x = 0;x<21;x++){
             getEditingCell(r1,x).setCellValue(childSheet.getRow(4).getCell(x).getStringCellValue());
@@ -287,23 +370,16 @@ public class ExcelReader {
         });
 
 
+       //写入工作簿
+        writeWbs(targetXlsFile,wbs);
 
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(targetXlsFile);
-            wbs.write(out);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if(out!=null){
-                    out.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
 
+    }
+
+    private void writeWbs(File targetXlsFile,Workbook wbs) throws IOException{
+        FileOutputStream out = new FileOutputStream(targetXlsFile);
+        wbs.write(out);
+        out.close();
     }
 
     private Cell getEditingCell(Row row,Integer i){
@@ -324,16 +400,16 @@ public class ExcelReader {
     }
 
     public static void main(String[] args) {
-        ExcelReader excelReader = new ExcelReader();
-        try {
-            File f =  new File("/Users/husu/Desktop/20140808.xls");
-            XlsData result = excelReader.loadXls(f);
-            List<MarketData> tradeList =excelReader.analyseData(result.getMdList(),result.getStopLossLine());
-            File newFile =excelReader.pasteFile(f);
-            excelReader.modify(newFile,tradeList);
-            System.out.println("========执行结束，文件地址" + newFile.getPath());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        ExcelReader excelReader = new ExcelReader();
+//        try {
+//            File f =  new File("/Users/husu/Desktop/20140808.xls");
+//            XlsData result = excelReader.loadXls(f,10);
+//            List<MarketData> tradeList =excelReader.analyseData(result.getMdList(),result.getStopLossLine());
+//            File newFile =excelReader.pasteFile(f,"");
+//            excelReader.modify(newFile,tradeList);
+//            System.out.println("========执行结束，文件地址" + newFile.getPath());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 }
