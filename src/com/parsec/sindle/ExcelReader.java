@@ -324,6 +324,9 @@ public class ExcelReader {
             getEditingCell(r1,x).setCellValue(childSheet.getRow(4).getCell(x).getStringCellValue());
         }
 
+        CellStyle style =  wbs.createCellStyle();
+        style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+        style.setFillForegroundColor(HSSFColor.RED.index);
 
         tradeList.forEach(p->{          //填充交易点
             Map<String,Double> curMap = p.getResultMap();
@@ -347,6 +350,7 @@ public class ExcelReader {
             Double curHOL ;
             Double curHOL4zsz;//最高价或者最低价，对应最少赚
             Double closePrice;//收盘价，对应收盘赚
+
             for(int n= p.getPreTradePoint();n<(p.getRowIndex()+1);n++){
                 curHOL = (p.getTradeType()==TradeType.LONG) ? childSheet.getRow(n).getCell(2).getNumericCellValue():childSheet.getRow(n).getCell(3).getNumericCellValue();    //多取最高价计算  空取最低价计算  用来计算最多赚
                 curHOL4zsz = (p.getTradeType()==TradeType.SHORT) ? childSheet.getRow(n).getCell(2).getNumericCellValue():childSheet.getRow(n).getCell(3).getNumericCellValue();    //多取最高价计算  空取最低价计算  用来计算最多赚
@@ -360,6 +364,7 @@ public class ExcelReader {
             Double curValue=0.0;
             Cell curCell=null;
             Row r= newSheet.createRow(newSheet.getLastRowNum()+1);
+
             for(Integer x = 0;x<21;x++){
                 if(x==0) {
                     getEditingCell(r, x).setCellValue(
@@ -369,9 +374,7 @@ public class ExcelReader {
                     curCell =getEditingCell(r, x);
 
                     if(curValue<0.0){
-                        CellStyle style =  wbs.createCellStyle();
-                        style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
-                        style.setFillForegroundColor(HSSFColor.RED.index);
+
 
                         curCell.setCellStyle(style);
                     }
