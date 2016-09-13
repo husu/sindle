@@ -2,16 +2,12 @@ package com.parsec.sindle;
 
 import com.parsec.sindle.model.MarketData;
 import com.parsec.sindle.model.XlsData;
-
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.URISyntaxException;
-
-
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * @auther:husu

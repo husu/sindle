@@ -82,8 +82,9 @@ public class ExcelReader {
                 if(r-5>i-2){ //跳过前 i-1行
                     formula = new StringBuffer("average(E").append(r-3).append(":E").append(r+1).append(")");
                     getEditingCell(r1,6).setCellFormula(formula.toString());//MA30
-                    getEditingCell(r1,7).setCellFormula(new StringBuffer("(D").append(r+1).append(">G").append(r+1).append(")*1").toString());//最低计算
-                    getEditingCell(r1,8).setCellFormula(new StringBuffer("(C").append(r+1).append(">G").append(r+1).append(")*1").toString()); //最高计算
+                    getEditingCell(r1,7).setCellFormula("(D" + (r + 1) + ">G" + (r + 1) + ")*1");//最低计算
+                    getEditingCell(r1,8).setCellFormula("(C" + (r + 1) + ">G" + (r + 1) + ")*1"); //最高计算
+                    getEditingCell(r1,9).setCellFormula("IF(H" + r + "=I" + r + ",I" + r + ",J" + r + ")"); //多空计算
                 }else{
                     getEditingCell(r1,6).setCellValue("");//MA30
 
@@ -129,13 +130,9 @@ public class ExcelReader {
         List<MarketData> mdList= new ArrayList<>();
 
 
-        for(int i=childSheet.getLastRowNum();i>=5;i--){
+        for(int i=childSheet.getLastRowNum();i>=(5+maNum-1);i--){
             curRow = childSheet.getRow(i);
 
-
-            if("".equals(curRow.getCell(6).getStringCellValue())){
-                continue;
-            }
 
 
             boolean flag = false;
