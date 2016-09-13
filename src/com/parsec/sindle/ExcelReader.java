@@ -44,12 +44,24 @@ public class ExcelReader {
 
 
 
+
          // 复制多个MA表
 
         Row r1;
+        Row stopRow; //止损所在的行
         for(int i=from;i<=to;i++){
 
             maSheet = wbs.createSheet("MA" + i);
+
+            stopRow =  maSheet.getRow(2);
+            if(stopRow==null){
+                stopRow = maSheet.createRow(2);
+
+            }
+
+            getEditingCell(stopRow,0).setCellValue("止损");
+            getEditingCell(stopRow,1).setCellValue(firstSheet.getRow(2).getCell(1).getNumericCellValue());
+
 
             StringBuffer formula ;
             for(int r=4;r<=firstSheet.getLastRowNum();r++){      //遍历行
@@ -77,8 +89,7 @@ public class ExcelReader {
 
                 }
             }
-            getEditingCell(maSheet.getRow(2),0).setCellValue("止损");
-            getEditingCell(maSheet.getRow(2),1).setCellValue(firstSheet.getRow(2).getCell(1).getNumericCellValue());
+
 
         }
 
