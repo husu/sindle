@@ -18,13 +18,13 @@ public class MarketData {
     private Boolean isTradePoint; //是否产生交易的时间点（行）
     private TradeType tradeType;
     private Integer preTradePoint;
-    private Map<String,Double> resultMap;
+    private Map<String,String> resultMap;
 
-    public Map<String, Double> getResultMap() {
+    public Map<String, String> getResultMap() {
         return resultMap;
     }
 
-    public void setResultMap(Map<String, Double> resultMap) {
+    public void setResultMap(Map<String, String> resultMap) {
         this.resultMap = resultMap;
     }
 

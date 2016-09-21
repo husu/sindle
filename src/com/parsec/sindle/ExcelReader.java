@@ -191,38 +191,45 @@ public class ExcelReader {
         });
 
         tradeList.forEach(p->{
-            Map<String,Double> map =  new HashMap<>();
+            Map<String,String> map =  new HashMap<>();
 
             //开仓点位
-            map.put("openPoint",mdList.stream().filter(md-> {
+            map.put("openPoint","E" + (mdList.stream().filter(md-> {
                 int pp = p.getPreTradePoint()-1;
                 pp = pp<(5+maNum-1)?(5+maNum-1):pp;
                 return md.getRowIndex() == pp;
-            }).max(Comparator.comparing(MarketData::getClosePrice)).get().getClosePrice());
+            }).max(Comparator.comparing(MarketData::getClosePrice)).get().getRowIndex() + 1));
 
             //平仓点位
-            map.put("sellPoint",p.getClosePrice());
+            map.put("sellPoint","E"+(p.getRowIndex()+1));
 
             //最高价
-            map.put("highestPrice",mdList.stream().filter(md-> (md.getRowIndex()>=(p.getPreTradePoint()) && md.getRowIndex()<=p.getRowIndex()))
-                    .max(Comparator.comparing(MarketData::getHightestPrice)).get().getHightestPrice());
+            map.put("highestPrice","max(C" + p.getPreTradePoint() + ":C" + (p.getRowIndex()+1) + ")");
 
             //最低价
-            map.put("lowestPrice",mdList.stream().filter(md-> (md.getRowIndex()>=(p.getPreTradePoint()) && md.getRowIndex()<=p.getRowIndex()))
-                    .min(Comparator.comparing(MarketData::getLowestPrice)).get().getLowestPrice());
+//            map.put("lowestPrice",mdList.stream().filter(md-> (md.getRowIndex()>=(p.getPreTradePoint()) && md.getRowIndex()<=p.getRowIndex()))
+//                    .min(Comparator.comparing(MarketData::getLowestPrice)).get().getLowestPrice());
+            map.put("lowestPrice","min(D"+p.getPreTradePoint()+":D" + (p.getRowIndex()+1) + ")");
+
 
             //结果无止损
-            Double lossNoStop = (p.getTradeType()==TradeType.SHORT)?map.get("openPoint")-map.get("sellPoint"):map.get("sellPoint")-map.get("openPoint");
+//            Double lossNoStop = (p.getTradeType()==TradeType.SHORT)?map.get("openPoint")-map.get("sellPoint"):map.get("sellPoint")-map.get("openPoint");
+//            map.put("lossNoStop",lossNoStop);
+
+            String lossNoStop =  (p.getTradeType()==TradeType.SHORT)?("K" + (p.getRowIndex()+1) + "-L" +(p.getRowIndex()+1))
+                    :("L" + (p.getRowIndex()+1) + "-K" +  (p.getRowIndex()+1) );
             map.put("lossNoStop",lossNoStop);
 
             //计算最大亏损
-            map.put("mostLoss",p.getTradeType()==TradeType.LONG?(map.get("lowestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("highestPrice")));
+//            map.put("mostLoss",p.getTradeType()==TradeType.LONG?(map.get("lowestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("highestPrice")));
+            map.put("mostLoss",p.getTradeType()==TradeType.LONG?"P"+(p.getRowIndex()+1)+"-K"+(p.getRowIndex()+1):"K"+(p.getRowIndex()+1) + "-O" + (p.getRowIndex()+1));
 
             //结果有止损   逻辑是，如果没有止损，则为无止损结果，止损，则为止损值
-            map.put("lossStop",map.get("mostLoss")<=mostLossLine?mostLossLine:lossNoStop);
+            map.put("lossStop","IF(R"+(p.getRowIndex()+1)+"<$B$3,$B$3,M" + (p.getRowIndex()+1) + ")");
 
             //计算最大赢利
-            map.put("mostEarn",p.getTradeType()==TradeType.LONG?(map.get("highestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("lowestPrice")));
+//            map.put("mostEarn",p.getTradeType()==TradeType.LONG?(map.get("highestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("lowestPrice")));
+            map.put("mostEarn",p.getTradeType()==TradeType.LONG?"O" + (p.getRowIndex()+1) + "-K" + (p.getRowIndex()+1):"K" +(p.getRowIndex()+1) + "-P" + (p.getRowIndex()+1));
 
             p.setResultMap(map);
         });
@@ -329,35 +336,26 @@ public class ExcelReader {
         style.setFillForegroundColor(HSSFColor.RED.index);
 
         tradeList.forEach(p->{          //填充交易点
-            Map<String,Double> curMap = p.getResultMap();
+            Map<String,String> curMap = p.getResultMap();
 
             Integer i= 10;
-            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("openPoint"));
-            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("sellPoint"));
-            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("lossNoStop"));
-            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("lossStop"));//结果有止损
-            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("highestPrice")); //最高价
-            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("lowestPrice"));
-            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("mostEarn"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("openPoint"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("sellPoint"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("lossNoStop"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("lossStop"));//结果有止损
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("highestPrice")); //最高价
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("lowestPrice"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("mostEarn"));
 
 
-            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellValue(curMap.get("mostLoss"));
-            int dk = 1; //这个参数就是这么屌
-            if(p.getTradeType()==TradeType.SHORT){
-                dk = -1;
-            }
+            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("mostLoss"));
 
-            Double curHOL ;
-            Double curHOL4zsz;//最高价或者最低价，对应最少赚
-            Double closePrice;//收盘价，对应收盘赚
 
             for(int n= p.getPreTradePoint();n<(p.getRowIndex()+1);n++){
-                curHOL = (p.getTradeType()==TradeType.LONG) ? childSheet.getRow(n).getCell(2).getNumericCellValue():childSheet.getRow(n).getCell(3).getNumericCellValue();    //多取最高价计算  空取最低价计算  用来计算最多赚
-                curHOL4zsz = (p.getTradeType()==TradeType.SHORT) ? childSheet.getRow(n).getCell(2).getNumericCellValue():childSheet.getRow(n).getCell(3).getNumericCellValue();    //多取最高价计算  空取最低价计算  用来计算最多赚
-                closePrice = childSheet.getRow(n).getCell(4).getNumericCellValue();
-                getEditingCell(childSheet.getRow(n),18).setCellValue((curHOL-p.getResultMap().get("openPoint"))*dk);  //最多赚，屌不屌
-                getEditingCell(childSheet.getRow(n),19).setCellValue((curHOL4zsz-p.getResultMap().get("openPoint"))*dk);  //最少赚，屌不屌
-                getEditingCell(childSheet.getRow(n),20).setCellValue((closePrice-p.getResultMap().get("openPoint"))*dk);  //最少赚，屌不屌
+
+                getEditingCell(childSheet.getRow(n),18).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-D"+(p.getRowIndex()+1):"C"+(p.getRowIndex()+1)+"-K" + (p.getRowIndex()+1));  //最多赚
+                getEditingCell(childSheet.getRow(n),19).setCellFormula(p.getTradeType()==TradeType.LONG?"D"+(p.getRowIndex()+1)+"-K" + (p.getRowIndex()+1):"K"+(p.getRowIndex()+1)+"-C"+ (p.getRowIndex()+1));  //最少赚
+                getEditingCell(childSheet.getRow(n),20).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-E" + (p.getRowIndex()+1):"E"+(p.getRowIndex()+1)+"-K"+(p.getRowIndex()+1));  //收盘赚，屌不屌
 
             }
 
@@ -365,16 +363,33 @@ public class ExcelReader {
             Cell curCell=null;
             Row r= newSheet.createRow(newSheet.getLastRowNum()+1);
 
+
+            FormulaEvaluator evaluator = null;
+            try {
+                evaluator = this.getFormulaEvalatorInstance(fileName,wbs);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+            Cell sourceCell;
             for(Integer x = 0;x<21;x++){
                 if(x==0) {
                     getEditingCell(r, x).setCellValue(
                             childSheet.getRow(p.getRowIndex()).getCell(x).getStringCellValue());
                 }else{
-                    curValue =  childSheet.getRow(p.getRowIndex()).getCell(x).getNumericCellValue();
                     curCell =getEditingCell(r, x);
 
-                    if(curValue<0.0){
+                    sourceCell = childSheet.getRow(p.getRowIndex()).getCell(x);
+                    if(sourceCell.getCellType() == Cell.CELL_TYPE_FORMULA){
+                        curValue = getFormulaValue(childSheet.getRow(p.getRowIndex()).getCell(x),evaluator);
 
+                    }else{
+                        curValue = sourceCell.getNumericCellValue();
+                    }
+
+
+                    if(curValue<0.0){
 
                         curCell.setCellStyle(style);
                     }
