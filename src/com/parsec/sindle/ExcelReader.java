@@ -87,6 +87,7 @@ public class ExcelReader {
                     getEditingCell(r1,7).setCellFormula("(D" + (r + 1) + ">G" + (r + 1) + ")*1");//最低计算
                     getEditingCell(r1,8).setCellFormula("(C" + (r + 1) + ">G" + (r + 1) + ")*1"); //最高计算
                     getEditingCell(r1,9).setCellFormula("IF(H" + r + "=I" + r + ",I" + r + ",J" + r + ")"); //多空计算
+
                 }
             }
 
@@ -123,7 +124,7 @@ public class ExcelReader {
 
 
         MarketData marketData;
-        Double preDk = null;
+        Double preDk = null;   //记录上一个多空状态
         Row curRow;
 
         childSheet.setForceFormulaRecalculation(true);
@@ -133,23 +134,31 @@ public class ExcelReader {
 
         FormulaEvaluator evaluator = this.getFormulaEvalatorInstance(fileName,wbs);
 
+        boolean flag = false;
+
         for(int i=childSheet.getLastRowNum();i>=(5+maNum-1);i--){
             curRow = childSheet.getRow(i);
 
 
+            marketData = new MarketData(i);
 
-            boolean flag = false;
+
+
+
+
+            flag = false;
+
+
 
             if ((preDk!=null && preDk != this.getFormulaValue(curRow.getCell(9),evaluator)) || i== childSheet.getLastRowNum()){
                 flag =true;
+
             }
 
             preDk = this.getFormulaValue(curRow.getCell(9),evaluator);
 
 
 
-
-            marketData = new MarketData(i);
 
 
             marketData.setTradePoint(flag);
@@ -159,6 +168,10 @@ public class ExcelReader {
             marketData.setHightestPrice(checkNull(curRow.getCell(2).getNumericCellValue(),"第" + (i+1) + "行，最高价"));
             marketData.setLowestPrice(checkNull(curRow.getCell(3).getNumericCellValue(),"第" + (i+1) + "行，最低价"));
             marketData.setClosePrice(checkNull(curRow.getCell(4).getNumericCellValue(),"第" + (i+1) + "行，收盘价"));
+
+
+
+
 
 
 
@@ -190,6 +203,7 @@ public class ExcelReader {
             return p2;
         });
 
+
         tradeList.forEach(p->{
             Map<String,String> map =  new HashMap<>();
 
@@ -200,16 +214,25 @@ public class ExcelReader {
                 return md.getRowIndex() == pp;
             }).max(Comparator.comparing(MarketData::getClosePrice)).get().getRowIndex() + 1));
 
+            double buyPrice = mdList.stream().filter(md-> {
+                int pp = p.getPreTradePoint()-1;
+                pp = pp<(5+maNum-1)?(5+maNum-1):pp;
+                return md.getRowIndex() == pp;
+            }).max(Comparator.comparing(MarketData::getClosePrice)).get().getClosePrice();
+
+            p.setBuyPrice(buyPrice);
+
+
             //平仓点位
             map.put("sellPoint","E"+(p.getRowIndex()+1));
 
             //最高价
-            map.put("highestPrice","max(C" + p.getPreTradePoint() + ":C" + (p.getRowIndex()+1) + ")");
+            map.put("highestPrice","max(C" + (p.getPreTradePoint()+1) + ":C" + (p.getRowIndex()+1) + ")");
 
             //最低价
 //            map.put("lowestPrice",mdList.stream().filter(md-> (md.getRowIndex()>=(p.getPreTradePoint()) && md.getRowIndex()<=p.getRowIndex()))
 //                    .min(Comparator.comparing(MarketData::getLowestPrice)).get().getLowestPrice());
-            map.put("lowestPrice","min(D"+p.getPreTradePoint()+":D" + (p.getRowIndex()+1) + ")");
+            map.put("lowestPrice","min(D"+(p.getPreTradePoint()+1)+":D" + (p.getRowIndex()+1) + ")");
 
 
             //结果无止损
@@ -335,6 +358,16 @@ public class ExcelReader {
         style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
         style.setFillForegroundColor(HSSFColor.RED.index);
 
+
+
+
+        double stopLine = this.getEditingCell(childSheet.getRow(2),1).getNumericCellValue();
+
+        if(stopLine == 0 ){
+            throw new Exception("止损未填写");
+        }
+
+
         tradeList.forEach(p->{          //填充交易点
             Map<String,String> curMap = p.getResultMap();
 
@@ -351,13 +384,40 @@ public class ExcelReader {
             getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("mostLoss"));
 
 
+            int num = 0;
+            int stopPos =0 ;//记录止损点
+
             for(int n= p.getPreTradePoint();n<(p.getRowIndex()+1);n++){
 
-                getEditingCell(childSheet.getRow(n),18).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-D"+(p.getRowIndex()+1):"C"+(p.getRowIndex()+1)+"-K" + (p.getRowIndex()+1));  //最多赚
-                getEditingCell(childSheet.getRow(n),19).setCellFormula(p.getTradeType()==TradeType.LONG?"D"+(p.getRowIndex()+1)+"-K" + (p.getRowIndex()+1):"K"+(p.getRowIndex()+1)+"-C"+ (p.getRowIndex()+1));  //最少赚
-                getEditingCell(childSheet.getRow(n),20).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-E" + (p.getRowIndex()+1):"E"+(p.getRowIndex()+1)+"-K"+(p.getRowIndex()+1));  //收盘赚，屌不屌
+                getEditingCell(childSheet.getRow(n),18).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-D"+ n :"C"+ (n+1) +"-K" + (p.getRowIndex()+1));  //最多赚
+                getEditingCell(childSheet.getRow(n),19).setCellFormula(p.getTradeType()==TradeType.LONG?"D"+ (n+1) +"-K" + (p.getRowIndex()+1):"K"+(p.getRowIndex()+1)+"-C"+ (n+1));  //最少赚
+                getEditingCell(childSheet.getRow(n),20).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-E" + (n+1):"E"+ (n+1) +"-K"+(p.getRowIndex()+1));  //收盘赚
+
+
+
+
+                boolean cond = p.getTradeType()==TradeType.SHORT && p.getBuyPrice() - getEditingCell(childSheet.getRow(n),4).getNumericCellValue() <= stopLine ;  //做空且亏尿
+                boolean cond2 =p.getTradeType()==TradeType.LONG &&  getEditingCell(childSheet.getRow(n),4).getNumericCellValue() - p.getBuyPrice() <= stopLine ; //做多且亏尿
+
+                if((cond || cond2) && num<1){  //找到亏尿点
+                    stopPos = n+1;
+                    num++;
+                }
 
             }
+
+
+
+            if(stopPos>0){ //存在亏尿点,填写亏尿前最多赚
+                getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(F" +(p.getPreTradePoint()+1) + ":F" + stopPos + ")");
+            }else{ //不存在，那就随便创建一个单元格
+                getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellValue("");
+
+            }
+
+
+
+            //以下是填充统计表
 
             Double curValue=0.0;
             Cell curCell=null;
@@ -373,7 +433,7 @@ public class ExcelReader {
 
 
             Cell sourceCell;
-            for(Integer x = 0;x<21;x++){
+            for(Integer x = 0;x<22;x++){
                 if(x==0) {
                     getEditingCell(r, x).setCellValue(
                             childSheet.getRow(p.getRowIndex()).getCell(x).getStringCellValue());
@@ -384,7 +444,7 @@ public class ExcelReader {
                     if(sourceCell.getCellType() == Cell.CELL_TYPE_FORMULA){
                         curValue = getFormulaValue(childSheet.getRow(p.getRowIndex()).getCell(x),evaluator);
 
-                    }else{
+                    }else if(sourceCell.getCellType() == Cell.CELL_TYPE_NUMERIC){
                         curValue = sourceCell.getNumericCellValue();
                     }
 
@@ -400,7 +460,11 @@ public class ExcelReader {
                 }
             }
 
+
         });
+
+
+        //预计在此写统计总表
 
 
        //写入工作簿
