@@ -72,9 +72,8 @@ public class ExcelReader {
                 if(r1==null){
                     r1= maSheet.createRow(r);
                 }
-
-                for(int c=0;c<21;c++){ //填充列
-                    if(firstSheet.getRow(r).getCell(c).getCellType()==Cell.CELL_TYPE_STRING) {
+                for(int c=0;c<22;c++){ //填充列
+                    if(getEditingCell(firstSheet.getRow(r),c).getCellType()==Cell.CELL_TYPE_STRING) {
                         getEditingCell(r1, c).setCellValue(firstSheet.getRow(r).getCell(c).getStringCellValue());
                     }else {
                         getEditingCell(r1, c).setCellValue(firstSheet.getRow(r).getCell(c).getNumericCellValue());
@@ -350,7 +349,7 @@ public class ExcelReader {
         Sheet childSheet = wbs.getSheet("MA" + maNum);
         Sheet newSheet = wbs.createSheet("MA"+maNum+"汇总");
         Row r1= newSheet.createRow(0);
-        for(Integer x = 0;x<21;x++){
+        for(Integer x = 0;x<22;x++){
             getEditingCell(r1,x).setCellValue(childSheet.getRow(4).getCell(x).getStringCellValue());
         }
 
@@ -389,7 +388,7 @@ public class ExcelReader {
 
             for(int n= p.getPreTradePoint();n<(p.getRowIndex()+1);n++){
 
-                getEditingCell(childSheet.getRow(n),18).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-D"+ n :"C"+ (n+1) +"-K" + (p.getRowIndex()+1));  //最多赚
+                getEditingCell(childSheet.getRow(n),18).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-D"+ (n+1) :"C"+ (n+1) +"-K" + (p.getRowIndex()+1));  //最多赚
                 getEditingCell(childSheet.getRow(n),19).setCellFormula(p.getTradeType()==TradeType.LONG?"D"+ (n+1) +"-K" + (p.getRowIndex()+1):"K"+(p.getRowIndex()+1)+"-C"+ (n+1));  //最少赚
                 getEditingCell(childSheet.getRow(n),20).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-E" + (n+1):"E"+ (n+1) +"-K"+(p.getRowIndex()+1));  //收盘赚
 

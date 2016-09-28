@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * @auther:husu
- * @version:1.11
+ * @version:1.12
  * @date 16/9/21.
  */
 public class MainUI implements ActionListener {
@@ -53,7 +53,7 @@ public class MainUI implements ActionListener {
     }
 
     private static void createAndShowGUI() throws URISyntaxException{
-        JFrame frame = new JFrame("Sindle DBD 1.11 公式版");
+        JFrame frame = new JFrame("Sindle DBD  公1.12 工式版");
         frame.setContentPane(new MainUI().panel1);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
