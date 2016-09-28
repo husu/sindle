@@ -349,7 +349,7 @@ public class ExcelReader {
         Sheet childSheet = wbs.getSheet("MA" + maNum);
         Sheet newSheet = wbs.createSheet("MA"+maNum+"汇总");
         Row r1= newSheet.createRow(0);
-        for(Integer x = 0;x<22;x++){
+        for(Integer x = 0;x<22;x++){         //复制表头
             getEditingCell(r1,x).setCellValue(childSheet.getRow(4).getCell(x).getStringCellValue());
         }
 
@@ -393,10 +393,8 @@ public class ExcelReader {
                 getEditingCell(childSheet.getRow(n),20).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-E" + (n+1):"E"+ (n+1) +"-K"+(p.getRowIndex()+1));  //收盘赚
 
 
-
-
-                boolean cond = p.getTradeType()==TradeType.SHORT && p.getBuyPrice() - getEditingCell(childSheet.getRow(n),4).getNumericCellValue() <= stopLine ;  //做空且亏尿
-                boolean cond2 =p.getTradeType()==TradeType.LONG &&  getEditingCell(childSheet.getRow(n),4).getNumericCellValue() - p.getBuyPrice() <= stopLine ; //做多且亏尿
+                boolean cond = p.getTradeType()==TradeType.SHORT && p.getBuyPrice() - getEditingCell(childSheet.getRow(n),2).getNumericCellValue() <= stopLine ;  //做空且亏尿
+                boolean cond2 =p.getTradeType()==TradeType.LONG &&  getEditingCell(childSheet.getRow(n),3).getNumericCellValue() - p.getBuyPrice() <= stopLine ; //做多且亏尿
 
                 if((cond || cond2) && num<1){  //找到亏尿点
                     stopPos = n+1;
@@ -407,8 +405,10 @@ public class ExcelReader {
 
 
 
+            //填充亏尿点
+
             if(stopPos>0){ //存在亏尿点,填写亏尿前最多赚
-                getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(F" +(p.getPreTradePoint()+1) + ":F" + stopPos + ")");
+                getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(S" +(p.getPreTradePoint()+1) + ":S" + stopPos + ")");
             }else{ //不存在，那就随便创建一个单元格
                 getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellValue("");
 

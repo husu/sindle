@@ -122,7 +122,13 @@ public class MainUI implements ActionListener {
                        int to = Integer.parseInt(this.a60TextField.getText());
 
 
-                       log.append("正在复制并生成MA的中间数据，共有" + (to-from+1) + "个表要生成，可想而知会很慢\n");
+
+                       if((to-from+1)>9) {
+                           log.append("正在复制并生成MA的中间数据，共有" + (to - from + 1) + "个表要生成，可想而知会很慢\n");
+                       }else{
+                           log.append("正在复制并生成MA的中间数据，共有" + (to - from + 1) + "个表要生成\n");
+
+                       }
                        File maFile = excelReader.createMADataSheet(fc.getSelectedFile(),from,to);
 
 
