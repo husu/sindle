@@ -75,8 +75,12 @@ public class ExcelReader {
                 for(int c=0;c<22;c++){ //填充列
                     if(getEditingCell(firstSheet.getRow(r),c).getCellType()==Cell.CELL_TYPE_STRING) {
                         getEditingCell(r1, c).setCellValue(firstSheet.getRow(r).getCell(c).getStringCellValue());
-                    }else {
+                    }else if(getEditingCell(firstSheet.getRow(r),c).getCellType()==Cell.CELL_TYPE_NUMERIC) {
                         getEditingCell(r1, c).setCellValue(firstSheet.getRow(r).getCell(c).getNumericCellValue());
+                    }else if(getEditingCell(firstSheet.getRow(r),c).getCellType()==Cell.CELL_TYPE_FORMULA){
+                        getEditingCell(r1, c).setCellFormula(firstSheet.getRow(r).getCell(c).getCellFormula());
+                    }else{
+                        getEditingCell(r1, c).setCellValue("");
                     }
                 }
 
@@ -142,9 +146,6 @@ public class ExcelReader {
             marketData = new MarketData(i);
 
 
-
-
-
             flag = false;
 
 
@@ -155,8 +156,6 @@ public class ExcelReader {
             }
 
             preDk = this.getFormulaValue(curRow.getCell(9),evaluator);
-
-
 
 
 
