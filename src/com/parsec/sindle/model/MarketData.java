@@ -20,11 +20,20 @@ public class MarketData {
     private Integer preTradePoint;
     private Double buyPrice;//开仓点位
     private Map<String,String> resultMap;
+    private Boolean stopped;  //有止损
 
     public Map<String, String> getResultMap() {
         return resultMap;
     }
 
+
+    public Boolean getStopped() {
+        return stopped;
+    }
+
+    public void setStopped(Boolean stopped) {
+        this.stopped = stopped;
+    }
 
     public Double getBuyPrice() {
         return buyPrice;

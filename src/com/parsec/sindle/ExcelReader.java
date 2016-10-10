@@ -21,6 +21,59 @@ import java.util.stream.Collectors;
  */
 public class ExcelReader {
 
+
+     private static final String STAT_TABLE  = "交易汇总";    //汇总表的名字
+
+    /**
+     * 写入统计表数据
+     * @param file
+     * @param statList
+     */
+    public void fullStatTable(File file,List<Map<String,String>> statList,int from) throws Exception {
+        InputStream is = new FileInputStream(file);
+
+
+        String fileName = file.getName();
+
+        Workbook wbs = this.getWorkbookInstance(fileName,is);
+
+        Sheet statSheet = wbs.getSheet(STAT_TABLE);
+
+        int n ;
+        Map<String,String> formulaMap;
+        Row curRow;
+        for(int i=0;i<statList.size();i++){
+            formulaMap = statList.get(i);
+            n =0;
+            curRow = statSheet.getRow(i+2);
+            if(curRow==null){
+                curRow = statSheet.createRow(i+2);
+            }
+            getEditingCell(curRow,n++).setCellValue("MA" + (from+i));
+            getEditingCell(curRow,n++).setCellValue(formulaMap.get("tradeCount"));  //交易次数
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("sumWithStop"));
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("sumWithoutStop"));
+
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("winCountWithStop"));
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("lossCountWithStop"));
+            getEditingCell(curRow,n++).setCellFormula("E" + (i+3) + "/B" + (i+3)); //盈利次数比例
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("maxWithStop"));
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("minWithStop"));
+
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("winCountWithoutStop"));
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("lossCountWithoutStop"));
+            getEditingCell(curRow,n++).setCellFormula("J" + (i+3) + "/B" +(i+3));
+
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("maxWithoutStop"));
+            getEditingCell(curRow,n++).setCellFormula(formulaMap.get("minWithoutStop"));
+
+
+        }
+
+        this.writeWbs(file,wbs);
+    }
+
+
     /**
      * 创建含有MA数据的各个表
      * @param file
@@ -43,6 +96,51 @@ public class ExcelReader {
         Sheet maSheet;
 
         Sheet firstSheet = wbs.getSheetAt(0);
+
+
+        //先创建一个汇总表
+
+        Sheet statSheet =   wbs.createSheet(STAT_TABLE);
+        Row titleRow = statSheet.getRow(0);
+        if(titleRow==null){
+            titleRow =  statSheet.createRow(0);
+        }
+
+
+        getEditingCell(titleRow,1).setCellValue("交易汇总");
+        getEditingCell(titleRow,2).setCellValue("交易汇总");
+        getEditingCell(titleRow,3).setCellValue("交易汇总");
+        getEditingCell(titleRow,4).setCellValue("有止损统计");
+        getEditingCell(titleRow,5).setCellValue("有止损统计");
+        getEditingCell(titleRow,6).setCellValue("有止损统计");
+        getEditingCell(titleRow,7).setCellValue("有止损统计");
+        getEditingCell(titleRow,8).setCellValue("有止损统计");
+        getEditingCell(titleRow,9).setCellValue("无止损统计");
+        getEditingCell(titleRow,10).setCellValue("无止损统计");
+        getEditingCell(titleRow,11).setCellValue("无止损统计");
+        getEditingCell(titleRow,12).setCellValue("无止损统计");
+        getEditingCell(titleRow,13).setCellValue("无止损统计");
+
+
+        titleRow = statSheet.getRow(1);
+        if(titleRow==null){
+            titleRow =  statSheet.createRow(1);
+        }
+
+        getEditingCell(titleRow,1).setCellValue("交易次数");
+        getEditingCell(titleRow,2).setCellValue("有止损汇总");
+        getEditingCell(titleRow,3).setCellValue("无止损汇总");
+        getEditingCell(titleRow,4).setCellValue("有止损盈利次数");
+        getEditingCell(titleRow,5).setCellValue("有止损亏损次数");
+        getEditingCell(titleRow,6).setCellValue("盈利次数比例");
+        getEditingCell(titleRow,7).setCellValue("单次最大盈利");
+        getEditingCell(titleRow,8).setCellValue("单次最大亏损");
+        getEditingCell(titleRow,9).setCellValue("无止损盈利次数");
+        getEditingCell(titleRow,10).setCellValue("无止损亏损次数");
+        getEditingCell(titleRow,11).setCellValue("盈利次数比例");
+        getEditingCell(titleRow,12).setCellValue("单次最大盈利");
+        getEditingCell(titleRow,13).setCellValue("单次最大亏损");
+
 
 
 
@@ -169,10 +267,6 @@ public class ExcelReader {
 
 
 
-
-
-
-
             mdList.add(marketData);
         }
 
@@ -242,7 +336,7 @@ public class ExcelReader {
             map.put("lossNoStop",lossNoStop);
 
             //计算最大亏损
-//            map.put("mostLoss",p.getTradeType()==TradeType.LONG?(map.get("lowestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("highestPrice")));
+//            Double mostLoss==TradeType.LONG?(map.get("lowestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("highestPrice")));
             map.put("mostLoss",p.getTradeType()==TradeType.LONG?"P"+(p.getRowIndex()+1)+"-K"+(p.getRowIndex()+1):"K"+(p.getRowIndex()+1) + "-O" + (p.getRowIndex()+1));
 
             //结果有止损   逻辑是，如果没有止损，则为无止损结果，止损，则为止损值
@@ -346,6 +440,9 @@ public class ExcelReader {
         Workbook wbs = this.getWorkbookInstance(fileName,is);
 
         Sheet childSheet = wbs.getSheet("MA" + maNum);
+
+
+
         Sheet newSheet = wbs.createSheet("MA"+maNum+"汇总");
         Row r1= newSheet.createRow(0);
         for(Integer x = 0;x<22;x++){         //复制表头
@@ -503,6 +600,9 @@ public class ExcelReader {
             throw new IOException("只接受xls与xlsx文件");
         }
     }
+
+
+
 
     public static void main(String[] args) {
 //        ExcelReader excelReader = new ExcelReader();
