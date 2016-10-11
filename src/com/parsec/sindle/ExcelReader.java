@@ -505,8 +505,8 @@ public class ExcelReader {
 
             if(stopPos>0){ //存在亏尿点,填写亏尿前最多赚
                 getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(S" +(p.getPreTradePoint()+1) + ":S" + stopPos + ")");
-            }else{ //不存在，那就随便创建一个单元格
-                getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellValue("");
+            }else{ //不存在，那就随便创建一个单元格,填充的是最多赚
+                getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(S" + (p.getPreTradePoint()+1)  + ":S"+ (p.getRowIndex()+1) +")");
 
             }
 
