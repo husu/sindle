@@ -124,7 +124,7 @@ public class MainUI implements ActionListener {
                              int from = Integer.parseInt(this.maField.getText());
                              int to = Integer.parseInt(this.a60TextField.getText());
                              int tableNum = to - from  +1  ;
-                             int pageSize = 60;
+                             int pageSize = 30;
                              int blockNum = tableNum / pageSize;
 
                              blockNum =  tableNum%pageSize>0?blockNum+1:blockNum;
@@ -151,7 +151,7 @@ public class MainUI implements ActionListener {
                                  List<Map<String, String>> statList = new ArrayList<>();
 
                                  Map<String, String> statMap = null;
-                                 for (int i = from; i <= to; i++) {
+                                 for (int i = curFrom; i <= curTo; i++) {
 
                                      xlsData = excelReader.loadXls(maFile, i);
 

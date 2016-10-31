@@ -199,6 +199,7 @@ public class ExcelReader {
         //写入文件
 
         this.writeWbs(mafile,wbs);
+        wbs =null;
         return mafile;
     }
 
