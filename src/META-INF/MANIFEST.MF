@@ -1,4 +1,3 @@
-Manifest-Version: 1.15
+Manifest-Version: 1.16
 Main-Class: com.parsec.sindle.MainUI
-
-
+Bundle-Icon: icon.png

@@ -22,7 +22,20 @@ import java.util.stream.Collectors;
 public class ExcelReader {
 
 
-     private static final String STAT_TABLE  = "交易汇总";    //汇总表的名字
+    public ExcelReader(Double slp, Double upSLP, Double swp) {
+        this.slp = slp;
+        this.upSLP = upSLP;
+        this.swp = swp;
+    }
+
+    private static final String STAT_TABLE  = "交易汇总";    //汇总表的名字
+
+
+    private Double slp=0.0;//止损点
+    private Double upSLP=0.0;//上浮止损点
+    private Double swp=0.0;//止盈点
+
+
 
     /**
      * 写入统计表数据
@@ -457,7 +470,8 @@ public class ExcelReader {
 
 
 
-        double stopLine = this.getEditingCell(childSheet.getRow(2),1).getNumericCellValue();
+//        double stopLine = this.getEditingCell(childSheet.getRow(2),1).getNumericCellValue();   //读取止损点
+        double stopLine = this.slp.doubleValue();  //读取止损点
 
         if(stopLine == 0 ){
             throw new Exception("止损未填写");
