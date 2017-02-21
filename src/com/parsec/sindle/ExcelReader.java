@@ -235,7 +235,8 @@ public class ExcelReader {
         org.apache.poi.ss.usermodel.Sheet childSheet = wbs.getSheet("MA"+maNum);
 
 
-        Double mostLossLine = checkNull(java.lang.Math.abs(childSheet.getRow(2).getCell(1).getNumericCellValue())*(-1),"止损设置，B3单元格");
+//        Double mostLossLine = checkNull(java.lang.Math.abs(childSheet.getRow(2).getCell(1).getNumericCellValue())*(-1),"止损设置，B3单元格");
+        Double mostLossLine = this.slp*(-1); //止损设置，之前在Excel中的设置是一个负数，但是改为程序设置后，为正数，所以这里乘以-1
 
 
         MarketData marketData;
@@ -247,10 +248,10 @@ public class ExcelReader {
 
         List<MarketData> mdList= new ArrayList<>();
 
-        FormulaEvaluator evaluator = this.getFormulaEvalatorInstance(fileName,wbs);
+        FormulaEvaluator evaluator = this.getFormulaEvalatorInstance(fileName,wbs);   //公式计算器
 
-        boolean flag = false;
-
+        boolean flag;
+         //遍历，找到交易点
         for(int i=childSheet.getLastRowNum();i>=(5+maNum-1);i--){
             curRow = childSheet.getRow(i);
 
@@ -301,7 +302,15 @@ public class ExcelReader {
         }
     }
 
-    public List<MarketData> analyseData(List<MarketData> mdList,Double mostLossLine,int maNum){
+    /**
+     * 返回分析了数据的列表
+     * @param mdList
+     * @param maNum
+     * @return
+     */
+
+    public List<MarketData> analyseData(List<MarketData> mdList,int maNum){
+        //从粒度数据中筛选出交易的数据
         List<MarketData> tradeList = mdList.stream().sorted((p1, p2)->(p1.getRowIndex()>p2.getRowIndex()?1:-1)).filter(MarketData::getTradePoint).collect(Collectors.toList());
 
         tradeList.stream().reduce(new MarketData(4+maNum-1),(p1,p2)-> {  //这个地方的初始值是4，是因为下面做了加1操作
@@ -353,13 +362,22 @@ public class ExcelReader {
 //            Double mostLoss==TradeType.LONG?(map.get("lowestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("highestPrice")));
             map.put("mostLoss",p.getTradeType()==TradeType.LONG?"P"+(p.getRowIndex()+1)+"-K"+(p.getRowIndex()+1):"K"+(p.getRowIndex()+1) + "-O" + (p.getRowIndex()+1));
 
-            //结果有止损   逻辑是，如果没有止损，则为无止损结果，止损，则为止损值
-            map.put("lossStop","IF(R"+(p.getRowIndex()+1)+"<$B$3,$B$3,M" + (p.getRowIndex()+1) + ")");
-
+            
             //计算最大赢利
-//            map.put("mostEarn",p.getTradeType()==TradeType.LONG?(map.get("highestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("lowestPrice")));
+//            double mostEarn = p.getTradeType()==TradeType.LONG?(map.get("highestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("lowestPrice"));
             map.put("mostEarn",p.getTradeType()==TradeType.LONG?"O" + (p.getRowIndex()+1) + "-K" + (p.getRowIndex()+1):"K" +(p.getRowIndex()+1) + "-P" + (p.getRowIndex()+1));
+//
+//            double curSlp;
+//            //计算当前止损点
+//            if((p.getTradeType()==TradeType.LONG && (p.getHightestPrice()-p.getBuyPrice())>=this.upSLP) || (p.getTradeType()==TradeType.SHORT && p.getBuyPrice()-p.getHightestPrice()<=this.upSLP)){
+//                curSlp = this.slp + this.upSLP;   //赚了那么钱以后，上调止损点
+//            }else{
+//                curSlp = this.slp;
+//            }
 
+            //结果有止损   逻辑是，如果没有止损，则为无止损结果，止损，则为止损值
+            map.put("lossStop","if(Q"+(p.getRowIndex()+1)+">="+this.upSLP+",IF(R"+(p.getRowIndex()+1)+"<="+ (this.slp+this.upSLP)*(-1) +","+ (this.slp+this.upSLP)*(-1) +",M" + (p.getRowIndex()+1) + ")," +
+                    "if(R"+(p.getRowIndex()+1)+"<=" + this.slp*(-1) + ","+this.slp*(-1)+",M" + (p.getRowIndex()+1) + "))");
             p.setResultMap(map);
         });
 
@@ -471,11 +489,11 @@ public class ExcelReader {
 
 
 //        double stopLine = this.getEditingCell(childSheet.getRow(2),1).getNumericCellValue();   //读取止损点
-        double stopLine = this.slp.doubleValue();  //读取止损点
-
-        if(stopLine == 0 ){
-            throw new Exception("止损未填写");
-        }
+//        final double stopLine = this.slp;  //读取止损点
+//
+//        if(stopLine == 0 ){
+//            throw new Exception("止损未填写");
+//        }
 
 
         tradeList.forEach(p->{          //填充交易点
@@ -504,13 +522,28 @@ public class ExcelReader {
                 getEditingCell(childSheet.getRow(n),20).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-E" + (n+1):"E"+ (n+1) +"-K"+(p.getRowIndex()+1));  //收盘赚
 
 
-                boolean cond = p.getTradeType()==TradeType.SHORT && p.getBuyPrice() - getEditingCell(childSheet.getRow(n),2).getNumericCellValue() <= stopLine ;  //做空且亏尿
-                boolean cond2 =p.getTradeType()==TradeType.LONG &&  getEditingCell(childSheet.getRow(n),3).getNumericCellValue() - p.getBuyPrice() <= stopLine ; //做多且亏尿
+
+                double curSLP;
+                boolean condUp1 = p.getTradeType()==TradeType.SHORT && getEditingCell(childSheet.getRow(n),2).getNumericCellValue()-p.getBuyPrice() >= upSLP ;  //做空且赚
+                boolean condUp2 =p.getTradeType()==TradeType.LONG &&  p.getBuyPrice() - getEditingCell(childSheet.getRow(n),3).getNumericCellValue()  >= upSLP ; //做多且赚
+
+                if(condUp1 || condUp2){
+                    curSLP =this.slp + this.upSLP;
+                }else{
+                    curSLP=this.slp;
+                }
+
+
+                boolean cond = p.getTradeType()==TradeType.SHORT && getEditingCell(childSheet.getRow(n),2).getNumericCellValue() - p.getBuyPrice()  >= curSLP;  //做空且亏尿
+                boolean cond2 =p.getTradeType()==TradeType.LONG &&  p.getBuyPrice() - getEditingCell(childSheet.getRow(n),3).getNumericCellValue()  >= curSLP; //做多且亏尿
 
                 if((cond || cond2) && num<1){  //找到亏尿点
                     stopPos = n+1;
                     num++;
                 }
+
+
+
 
             }
 

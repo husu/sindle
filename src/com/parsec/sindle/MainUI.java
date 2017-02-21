@@ -158,11 +158,11 @@ public class MainUI implements ActionListener {
                 Map<String, String> statMap = null;
                 for (int i = curFrom; i <= curTo; i++) {
 
-                    xlsData = excelReader.loadXls(maFile, i);
+                    xlsData = excelReader.loadXls(maFile, i);       // 载入excel
 
                     log.append("开始分析计算MA" + i + "数据，么么哒\n");
 
-                    List<MarketData> tradeList = excelReader.analyseData(xlsData.getMdList(), xlsData.getStopLossLine(), i);
+                    List<MarketData> tradeList = excelReader.analyseData(xlsData.getMdList(), i);   //分析数据开始
 
                     //总共交易次数
                     statMap = new HashMap<String, String>() {{

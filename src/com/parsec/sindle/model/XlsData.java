@@ -8,7 +8,7 @@ import java.util.List;
  * @date 16/9/7.
  */
 public class XlsData {
-    private List<MarketData> mdList;
+    private List<MarketData> mdList;//粒度数据
     private Double stopLossLine;
 
     public XlsData(List<MarketData> mdList, Double stopLossLine) {
