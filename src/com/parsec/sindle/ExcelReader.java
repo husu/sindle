@@ -378,6 +378,9 @@ public class ExcelReader {
             //结果有止损   逻辑是，如果没有止损，则为无止损结果，止损，则为止损值
             map.put("lossStop","if(Q"+(p.getRowIndex()+1)+">="+this.upSLP+",IF(R"+(p.getRowIndex()+1)+"<="+ (this.slp+this.upSLP)*(-1) +","+ (this.slp+this.upSLP)*(-1) +",M" + (p.getRowIndex()+1) + ")," +
                     "if(R"+(p.getRowIndex()+1)+"<=" + this.slp*(-1) + ","+this.slp*(-1)+",M" + (p.getRowIndex()+1) + "))");
+
+            map.put("stopWin","if(Q" + (p.getRowIndex()+1) + ">=" + this.swp + ",\"有止盈\",\"\")");
+
             p.setResultMap(map);
         });
 
@@ -510,6 +513,7 @@ public class ExcelReader {
 
 
             getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("mostLoss"));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),22).setCellFormula(curMap.get( "stopWin" ));
 
 
             int num = 0;
