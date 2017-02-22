@@ -87,7 +87,7 @@ public class MainUI implements ActionListener {
     }
 
     private static void createAndShowGUI() throws URISyntaxException{
-        JFrame frame = new JFrame("Sindle DBD  1.20 任务列表版");
+        JFrame frame = new JFrame("Sindle DBD  1.20");
         frame.setContentPane(new MainUI().panel1);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
