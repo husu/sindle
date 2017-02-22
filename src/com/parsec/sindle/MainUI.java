@@ -27,6 +27,7 @@ public class MainUI implements ActionListener {
     private JTextField stopLoseTextField;
     private JTextField adjustSLTextField;
     private JTextField stopWinTextField;
+    private JTextField upSTLTextField; //上浮止损点数
 
 
     JFileChooser fc;
@@ -84,6 +85,16 @@ public class MainUI implements ActionListener {
             throw new Exception("止盈点数字格式错误");
         }
 
+        try {
+            Integer addSLP = Integer.parseInt( upSTLTextField.getText() );
+            if(addSLP<0){
+                throw new Exception( "上浮止损点数不可小于0" );
+            }
+        } catch (NumberFormatException e) {
+            throw new Exception("上浮止损点数格式错误");
+        }
+
+
     }
 
     private static void createAndShowGUI() throws URISyntaxException{
@@ -116,8 +127,9 @@ public class MainUI implements ActionListener {
 
 
         Double slp = new Double( stopLoseTextField.getText() );//止损点
-        Double upSPL= new Double( adjustSLTextField.getText() );//上调止损点
+        Double upSPL= new Double( adjustSLTextField.getText() );//上调止损线
         Double sw = new Double( stopWinTextField.getText() );//止盈点
+        Double addSPP = new Double( upSTLTextField.getText() );//上调止损点数
 
 
         log.append("正在载入Excel表，么么哒" + "\n");

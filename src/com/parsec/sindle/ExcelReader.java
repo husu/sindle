@@ -22,10 +22,18 @@ import java.util.stream.Collectors;
 public class ExcelReader {
 
 
-    public ExcelReader(Double slp, Double upSLP, Double swp) {
+    /**
+     *
+     * @param slp 止损点
+     * @param upSLP 上调止损点盈利点
+     * @param swp 止盈点
+     * @param upPoint 上调止损点数
+     */
+    public ExcelReader(Double slp, Double upSLP, Double swp,Double upPoint) {
         this.slp = slp;
         this.upSLP = upSLP;
         this.swp = swp;
+        this.upPoint = upPoint;
     }
 
     private static final String STAT_TABLE  = "交易汇总";    //汇总表的名字
@@ -34,6 +42,7 @@ public class ExcelReader {
     private Double slp=0.0;//止损点
     private Double upSLP=0.0;//上浮止损点
     private Double swp=0.0;//止盈点
+    private Double upPoint =0.0;//具体上浮的止损点数
 
 
 
@@ -376,7 +385,7 @@ public class ExcelReader {
 //            }
 
             //结果有止损   逻辑是，如果没有止损，则为无止损结果，止损，则为止损值
-            map.put("lossStop","if(Q"+(p.getRowIndex()+1)+">="+this.upSLP+",IF(R"+(p.getRowIndex()+1)+"<="+ (this.slp+this.upSLP)*(-1) +","+ (this.slp+this.upSLP)*(-1) +",M" + (p.getRowIndex()+1) + ")," +
+            map.put("lossStop","if(Q"+(p.getRowIndex()+1)+">="+this.upSLP+",IF(R"+(p.getRowIndex()+1)+"<="+ (this.slp-this.upPoint)*(-1) +","+ (this.slp-this.upPoint)*(-1) +",M" + (p.getRowIndex()+1) + ")," +
                     "if(R"+(p.getRowIndex()+1)+"<=" + this.slp*(-1) + ","+this.slp*(-1)+",M" + (p.getRowIndex()+1) + "))");
 
             map.put("stopWin","if(Q" + (p.getRowIndex()+1) + ">=" + this.swp + ",\"有止盈\",\"\")");
@@ -532,7 +541,7 @@ public class ExcelReader {
                 boolean condUp2 =p.getTradeType()==TradeType.LONG &&  p.getBuyPrice() - getEditingCell(childSheet.getRow(n),3).getNumericCellValue()  >= upSLP ; //做多且赚
 
                 if(condUp1 || condUp2){
-                    curSLP =this.slp + this.upSLP;
+                    curSLP =this.slp - this.upPoint;
                 }else{
                     curSLP=this.slp;
                 }
