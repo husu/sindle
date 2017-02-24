@@ -133,7 +133,7 @@ public class MainUI implements ActionListener {
 
 
         log.append("正在载入Excel表，么么哒" + "\n");
-        ExcelReader excelReader = new ExcelReader(slp,upSPL,sw);
+        ExcelReader excelReader = new ExcelReader(slp,upSPL,sw,addSPP);
         try {
             int from = Integer.parseInt(this.maField.getText());
             int to = Integer.parseInt(this.a60TextField.getText());

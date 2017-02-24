@@ -384,9 +384,9 @@ public class ExcelReader {
 //                curSlp = this.slp;
 //            }
 
-            //结果有止损   逻辑是，如果没有止损，则为无止损结果，止损，则为止损值
-            map.put("lossStop","if(Q"+(p.getRowIndex()+1)+">="+this.upSLP+",IF(R"+(p.getRowIndex()+1)+"<="+ (this.slp-this.upPoint)*(-1) +","+ (this.slp-this.upPoint)*(-1) +",M" + (p.getRowIndex()+1) + ")," +
-                    "if(R"+(p.getRowIndex()+1)+"<=" + this.slp*(-1) + ","+this.slp*(-1)+",M" + (p.getRowIndex()+1) + "))");
+            //结果有止损   逻辑是:如果有止盈，则返回止盈——否则，判断如果没有止损，则为无止损结果，止损，则为止损值
+            map.put("lossStop","if(Q"+ (p.getRowIndex()+1) +">=" + this.swp + "," + this.swp + ",if(Q"+(p.getRowIndex()+1)+">="+this.upSLP+",IF(R"+(p.getRowIndex()+1)+"<="+ (this.slp-this.upPoint)*(-1) +","+ (this.slp-this.upPoint)*(-1) +",M" + (p.getRowIndex()+1) + ")," +
+                    "if(R"+(p.getRowIndex()+1)+"<=" + this.slp*(-1) + ","+this.slp*(-1)+",M" + (p.getRowIndex()+1) + ")))");
 
             map.put("stopWin","if(Q" + (p.getRowIndex()+1) + ">=" + this.swp + ",\"有止盈\",\"\")");
 
