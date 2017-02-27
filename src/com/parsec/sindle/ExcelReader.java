@@ -365,7 +365,7 @@ public class ExcelReader {
 
             String lossNoStop =  (p.getTradeType()==TradeType.SHORT)?("K" + (p.getRowIndex()+1) + "-L" +(p.getRowIndex()+1))
                     :("L" + (p.getRowIndex()+1) + "-K" +  (p.getRowIndex()+1) );
-            map.put("lossNoStop",lossNoStop);
+            map.put("lossNoStop",lossNoStop);                    
 
             //计算最大亏损
 //            Double mostLoss==TradeType.LONG?(map.get("lowestPrice")-map.get("openPoint")):(map.get("openPoint")-map.get("highestPrice")));
