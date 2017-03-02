@@ -88,8 +88,6 @@ public class ExcelReader {
 
             getEditingCell(curRow,n++).setCellFormula(formulaMap.get("maxWithoutStop"));
             getEditingCell(curRow,n++).setCellFormula(formulaMap.get("minWithoutStop"));
-
-
         }
 
         this.writeWbs(file,wbs);
@@ -204,12 +202,19 @@ public class ExcelReader {
                     }
                 }
 
+                if(r==4){
+                    getEditingCell( r1,22 ).setCellValue( "有止盈结果" );
+                    getEditingCell( r1,23 ).setCellValue( "止损止盈综合" );
+                }
+
                 if(r-5>i-2){ //跳过前 i-1行
                     formula = new StringBuffer("average(E").append(r-i+2).append(":E").append(r+1).append(")");
                     getEditingCell(r1,6).setCellFormula(formula.toString());//MA30
                     getEditingCell(r1,7).setCellFormula("(D" + (r + 1) + ">G" + (r + 1) + ")*1");//最低计算
                     getEditingCell(r1,8).setCellFormula("(C" + (r + 1) + ">G" + (r + 1) + ")*1"); //最高计算
                     getEditingCell(r1,9).setCellFormula("IF(H" + r + "=I" + r + ",I" + r + ",J" + r + ")"); //多空计算
+
+                    
 
                 }
             }
@@ -385,10 +390,20 @@ public class ExcelReader {
 //            }
 
             //结果有止损   逻辑是:如果有止盈，则返回止盈——否则，判断如果没有止损，则为无止损结果，止损，则为止损值
-            map.put("lossStop","if(Q"+ (p.getRowIndex()+1) +">=" + this.swp + "," + this.swp + ",if(Q"+(p.getRowIndex()+1)+">="+this.upSLP+",IF(R"+(p.getRowIndex()+1)+"<="+ (this.slp-this.upPoint)*(-1) +","+ (this.slp-this.upPoint)*(-1) +",M" + (p.getRowIndex()+1) + ")," +
-                    "if(R"+(p.getRowIndex()+1)+"<=" + this.slp*(-1) + ","+this.slp*(-1)+",M" + (p.getRowIndex()+1) + ")))");
+//            map.put("lossStop","if(Q"+ (p.getRowIndex()+1) +">=" + this.swp + "," + this.swp + ",if(Q"+(p.getRowIndex()+1)+">="+this.upSLP+",IF(R"+(p.getRowIndex()+1)+"<="+ (this.slp-this.upPoint)*(-1) +","+ (this.slp-this.upPoint)*(-1) +",M" + (p.getRowIndex()+1) + ")," +
+//                    "if(R"+(p.getRowIndex()+1)+"<=" + this.slp*(-1) + ","+this.slp*(-1)+",M" + (p.getRowIndex()+1) + ")))");
 
-            map.put("stopWin","if(Q" + (p.getRowIndex()+1) + ">=" + this.swp + ",\"有止盈\",\"\")");
+            map.put("stopWin","if(V" + (p.getRowIndex()+1) + ">=" + this.swp + "," + this.swp +",\"\")");
+
+
+            String sumFormula = "if(or(ISBLANK(N" + (p.getRowIndex()+1) +"),N" + (p.getRowIndex()+1) + "=\"\")," +
+                    "if(or(W" + (p.getRowIndex()+1) + "=\"\",ISBLANK(W"+(p.getRowIndex()+1)+")),M" + (p.getRowIndex()+1) + ",0)"
+                    
+                    + ",0)" +
+                    "+if(N" + (p.getRowIndex()+1) + "=\"\",0,N" + (p.getRowIndex()+1) + ")" +
+                    "+if(W" + (p.getRowIndex()+1) +"=\"\",0,W" + (p.getRowIndex()+1) + ")";
+
+            map.put( "sumResult", sumFormula);
 
             p.setResultMap(map);
         });
@@ -470,7 +485,7 @@ public class ExcelReader {
     }
 
     /**
-     * 填表格，好无聊
+     * 填表格，并计算中间数据
      * @param targetXlsFile
      * @param tradeList
      */
@@ -492,6 +507,9 @@ public class ExcelReader {
         for(Integer x = 0;x<22;x++){         //复制表头
             getEditingCell(r1,x).setCellValue(childSheet.getRow(4).getCell(x).getStringCellValue());
         }
+
+
+
 
         CellStyle style =  wbs.createCellStyle();
         style.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
@@ -515,19 +533,24 @@ public class ExcelReader {
             getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("openPoint"));
             getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("sellPoint"));
             getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("lossNoStop"));
-            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("lossStop"));//结果有止损
+//            getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("lossStop"));//结果有止损
+            i++;
             getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("highestPrice")); //最高价
             getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("lowestPrice"));
             getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("mostEarn"));
 
 
             getEditingCell(childSheet.getRow(p.getRowIndex()),i++).setCellFormula(curMap.get("mostLoss"));
-            getEditingCell(childSheet.getRow(p.getRowIndex()),22).setCellFormula(curMap.get( "stopWin" ));
+            getEditingCell(childSheet.getRow(p.getRowIndex()),22).setCellFormula(curMap.get("stopWin"));
+
+
+            getEditingCell(childSheet.getRow(p.getRowIndex()),23).setCellFormula(curMap.get("sumResult")); //综合止损、止盈、正常交易结果
+
 
 
             int num = 0;
             int stopPos =0 ;//记录止损点
-
+            double curSLP=0.0;
             for(int n= p.getPreTradePoint();n<(p.getRowIndex()+1);n++){
 
                 getEditingCell(childSheet.getRow(n),18).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-D"+ (n+1) :"C"+ (n+1) +"-K" + (p.getRowIndex()+1));  //最多赚
@@ -536,7 +559,6 @@ public class ExcelReader {
 
 
 
-                double curSLP;
                 boolean condUp1 = p.getTradeType()==TradeType.SHORT && getEditingCell(childSheet.getRow(n),2).getNumericCellValue()-p.getBuyPrice() >= upSLP ;  //做空且赚
                 boolean condUp2 =p.getTradeType()==TradeType.LONG &&  p.getBuyPrice() - getEditingCell(childSheet.getRow(n),3).getNumericCellValue()  >= upSLP ; //做多且赚
 
@@ -550,7 +572,7 @@ public class ExcelReader {
                 boolean cond = p.getTradeType()==TradeType.SHORT && getEditingCell(childSheet.getRow(n),2).getNumericCellValue() - p.getBuyPrice()  >= curSLP;  //做空且亏尿
                 boolean cond2 =p.getTradeType()==TradeType.LONG &&  p.getBuyPrice() - getEditingCell(childSheet.getRow(n),3).getNumericCellValue()  >= curSLP; //做多且亏尿
 
-                if((cond || cond2) && num<1){  //找到亏尿点
+                if((cond || cond2) && num<1){  //找到亏尿点 ，需要根据亏尿点算：1 亏尿前最多赚 2 亏尿时结果
                     stopPos = n+1;
                     num++;
                 }
@@ -565,7 +587,8 @@ public class ExcelReader {
             //填充亏尿点
 
             if(stopPos>0){ //存在亏尿点,填写亏尿前最多赚
-                getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(S" +(p.getPreTradePoint()+1) + ":S" + stopPos + ")");
+                getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(S" +(p.getPreTradePoint()+1) + ":S" + stopPos + ")");//止损前最多赚用他来计算止盈
+                getEditingCell( childSheet.getRow(p.getRowIndex()),13).setCellValue(curSLP);  //有止损结果
             }else{ //不存在，那就随便创建一个单元格,填充的是最多赚
                 getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(S" + (p.getPreTradePoint()+1)  + ":S"+ (p.getRowIndex()+1) +")");
 
@@ -576,7 +599,7 @@ public class ExcelReader {
             //以下是填充统计表
 
             Double curValue=0.0;
-            Cell curCell=null;
+            Cell curCell;
             Row r= newSheet.createRow(newSheet.getLastRowNum()+1);
 
 
