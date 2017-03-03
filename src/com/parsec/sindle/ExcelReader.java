@@ -550,35 +550,34 @@ public class ExcelReader {
 
             int num = 0;
             int stopPos =0 ;//记录止损点
-            double curSLP=0.0;
+            double curSLP=this.slp;
             for(int n= p.getPreTradePoint();n<(p.getRowIndex()+1);n++){
 
+                
                 getEditingCell(childSheet.getRow(n),18).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-D"+ (n+1) :"C"+ (n+1) +"-K" + (p.getRowIndex()+1));  //最多赚
                 getEditingCell(childSheet.getRow(n),19).setCellFormula(p.getTradeType()==TradeType.LONG?"D"+ (n+1) +"-K" + (p.getRowIndex()+1):"K"+(p.getRowIndex()+1)+"-C"+ (n+1));  //最少赚
                 getEditingCell(childSheet.getRow(n),20).setCellFormula(p.getTradeType()==TradeType.SHORT?"K"+(p.getRowIndex()+1)+"-E" + (n+1):"E"+ (n+1) +"-K"+(p.getRowIndex()+1));  //收盘赚
 
 
+                if(num<1) {
 
-                boolean condUp1 = p.getTradeType()==TradeType.SHORT && getEditingCell(childSheet.getRow(n),2).getNumericCellValue()-p.getBuyPrice() >= upSLP ;  //做空且赚
-                boolean condUp2 =p.getTradeType()==TradeType.LONG &&  p.getBuyPrice() - getEditingCell(childSheet.getRow(n),3).getNumericCellValue()  >= upSLP ; //做多且赚
+                    boolean condUp1 = p.getTradeType() == TradeType.SHORT && p.getBuyPrice() - getEditingCell( childSheet.getRow( n ), 3 ).getNumericCellValue() >= upSLP;  //做空且赚超过上移线
+                    boolean condUp2 = p.getTradeType() == TradeType.LONG && getEditingCell( childSheet.getRow( n ), 2 ).getNumericCellValue() - p.getBuyPrice() >= upSLP;
 
-                if(condUp1 || condUp2){
-                    curSLP =this.slp - this.upPoint;
-                }else{
-                    curSLP=this.slp;
+
+                    if (condUp1 || condUp2) {
+                        curSLP = this.slp - this.upPoint;
+                    }
+
+
+                    boolean cond = p.getTradeType() == TradeType.SHORT && getEditingCell( childSheet.getRow( n ), 2 ).getNumericCellValue() - p.getBuyPrice() >= curSLP;  //做空且亏尿
+                    boolean cond2 = p.getTradeType() == TradeType.LONG && p.getBuyPrice() - getEditingCell( childSheet.getRow( n ), 3 ).getNumericCellValue() >= curSLP; //做多且亏尿
+
+                    if (cond || cond2) {  //找到亏尿点 ，需要根据亏尿点算：1 亏尿前最多赚 2 亏尿时结果
+                        stopPos = n + 1;
+                        num++;
+                    }
                 }
-
-
-                boolean cond = p.getTradeType()==TradeType.SHORT && getEditingCell(childSheet.getRow(n),2).getNumericCellValue() - p.getBuyPrice()  >= curSLP;  //做空且亏尿
-                boolean cond2 =p.getTradeType()==TradeType.LONG &&  p.getBuyPrice() - getEditingCell(childSheet.getRow(n),3).getNumericCellValue()  >= curSLP; //做多且亏尿
-
-                if((cond || cond2) && num<1){  //找到亏尿点 ，需要根据亏尿点算：1 亏尿前最多赚 2 亏尿时结果
-                    stopPos = n+1;
-                    num++;
-                }
-
-
-
 
             }
 
@@ -588,7 +587,7 @@ public class ExcelReader {
 
             if(stopPos>0){ //存在亏尿点,填写亏尿前最多赚
                 getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(S" +(p.getPreTradePoint()+1) + ":S" + stopPos + ")");//止损前最多赚用他来计算止盈
-                getEditingCell( childSheet.getRow(p.getRowIndex()),13).setCellValue(curSLP);  //有止损结果
+                getEditingCell( childSheet.getRow(p.getRowIndex()),13).setCellValue(curSLP*(-1));  //有止损结果
             }else{ //不存在，那就随便创建一个单元格,填充的是最多赚
                 getEditingCell(childSheet.getRow(p.getRowIndex()),21).setCellFormula("max(S" + (p.getPreTradePoint()+1)  + ":S"+ (p.getRowIndex()+1) +")");
 
